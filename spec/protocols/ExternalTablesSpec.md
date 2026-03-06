@@ -329,7 +329,7 @@ Error Code | HTTP Status | Description
 CATALOG_DOES_NOT_EXIST | 404 | The specified catalog doesn't exist.<br/>The client should verify the catalog name or create the catalog first.
 SCHEMA_DOES_NOT_EXIST | 404 | The specified schema doesn't exist.<br/>The client should verify the schema name or create the schema first.
 TABLE_ALREADY_EXISTS | 400 | A table with the same name already exists in this schema.<br/>The client should provide a different table name.
-PERMISSION_DENIED | 403 | User lacks necessary permissions (CREATE_TABLE on schema, USE_CATALOG and USE_SCHEMA on the parent catalog and schema, or CREATE_EXTERNAL_TABLE on the external location).<br/>The client should ask their Unity Catalog admin to grant the required privileges.
+PERMISSION_DENIED | 403 | User lacks necessary permissions. Required: USE CATALOG on the catalog, and either OWNER on the schema or (USE SCHEMA + CREATE TABLE) on the schema. For external tables where the storage location falls within a registered external location: OWNER or CREATE EXTERNAL TABLE on that external location.<br/>The client should ask their Unity Catalog admin to grant the required privileges.
 INVALID_PARAMETER_VALUE | 400 | One or more request fields are invalid. This includes providing a `table_type` other than `EXTERNAL`, an unsupported `data_source_format`, a missing `storage_location`, or a `storage_location` that conflicts with an existing table or volume.
 
 ### Get a Table
@@ -441,7 +441,7 @@ Error Code | HTTP Status | Description
 CATALOG_DOES_NOT_EXIST | 404 | The specified catalog doesn't exist.<br/>The client should verify the catalog name or create the catalog first.
 SCHEMA_DOES_NOT_EXIST | 404 | The specified schema doesn't exist.<br/>The client should verify the schema name or create the schema first.
 TABLE_DOES_NOT_EXIST | 404 | The specified table doesn't exist.<br/>The client should verify the table name or create the table first.
-PERMISSION_DENIED | 403 | User lacks necessary permissions (SELECT on the table, USE_CATALOG and USE_SCHEMA on the parent catalog and schema).<br/>The client should ask their Unity Catalog admin to grant the required privileges.
+PERMISSION_DENIED | 403 | User lacks necessary permissions. Required: USE CATALOG on the catalog, USE SCHEMA on the schema, and OWNER or SELECT or MODIFY on the table.<br/>The client should ask their Unity Catalog admin to grant the required privileges.
 
 ### List Tables
 
@@ -459,6 +459,8 @@ catalog_name | string | Name of the parent catalog for tables of interest. | req
 schema_name | string | Name of the parent schema for tables of interest. | required (query parameter)
 max_results | int32 | Maximum number of tables to return per page. When set to 0, the server uses a default page size. When set to a value greater than 0, the page size is the minimum of this value and the server-configured maximum. | optional (query parameter)
 page_token | string | Opaque pagination token returned from a previous `listTables` response. Pass this value to retrieve the next page of results. | optional (query parameter)
+omit_properties | boolean | If `true`, the response omits table properties from each table entry. Default: `false`. | optional (query parameter)
+omit_columns | boolean | If `true`, the response omits column definitions from each table entry. Default: `false`. | optional (query parameter)
 
 #### Responses
 
@@ -515,7 +517,7 @@ Error Code | HTTP Status | Description
 -|-|-
 CATALOG_DOES_NOT_EXIST | 404 | The specified catalog doesn't exist.<br/>The client should verify the catalog name or create the catalog first.
 SCHEMA_DOES_NOT_EXIST | 404 | The specified schema doesn't exist.<br/>The client should verify the schema name or create the schema first.
-PERMISSION_DENIED | 403 | User lacks necessary permissions (USE_CATALOG and USE_SCHEMA on the parent catalog and schema).<br/>The client should ask their Unity Catalog admin to grant the required privileges.
+PERMISSION_DENIED | 403 | User lacks necessary permissions. Required: USE CATALOG on the catalog and USE SCHEMA on the schema.<br/>The client should ask their Unity Catalog admin to grant the required privileges.
 INVALID_PARAMETER_VALUE | 400 | The `max_results` parameter is less than 0.
 
 ### Delete a Table
@@ -556,7 +558,7 @@ Error Code | HTTP Status | Description
 CATALOG_DOES_NOT_EXIST | 404 | The specified catalog doesn't exist.<br/>The client should verify the catalog name.
 SCHEMA_DOES_NOT_EXIST | 404 | The specified schema doesn't exist.<br/>The client should verify the schema name.
 TABLE_DOES_NOT_EXIST | 404 | The specified table doesn't exist.<br/>The client should verify the table name.
-PERMISSION_DENIED | 403 | User lacks the necessary permissions (OWNER on the table or OWNER on the parent schema).<br/>The client should ask their Unity Catalog admin to grant the required privileges.
+PERMISSION_DENIED | 403 | User lacks the necessary permissions. Required: OWNER on the catalog; or OWNER on the schema plus USE CATALOG on the catalog; or OWNER on the table plus USE SCHEMA on the schema plus USE CATALOG on the catalog.<br/>The client should ask their Unity Catalog admin to grant the required privileges.
 
 ### Create an External Location
 
@@ -628,8 +630,8 @@ Possible errors on this API are listed below:
 Error Code | HTTP Status | Description
 -|-|-
 ALREADY_EXISTS | 409 | An external location with this name already exists.<br/>The client should provide a different name.
-CREDENTIAL_DOES_NOT_EXIST | 404 | The specified storage credential doesn't exist.<br/>The client should verify the credential name or create the credential first.
-PERMISSION_DENIED | 403 | User is not a metastore admin.<br/>The client should contact their Unity Catalog admin.
+NOT_FOUND | 404 | The specified storage credential does not exist.<br/>The client should verify the credential name or create the credential first.
+PERMISSION_DENIED | 403 | User is not a metastore admin and does not have both CREATE EXTERNAL LOCATION on the metastore and OWNER or CREATE EXTERNAL LOCATION on the credential.<br/>The client should contact their Unity Catalog admin.
 INVALID_PARAMETER_VALUE | 400 | One or more fields are invalid, such as a malformed URL.
 
 ### Get an External Location
@@ -872,7 +874,7 @@ Error Code | HTTP Status | Description
 -|-|-
 EXTERNAL_LOCATION_DOES_NOT_EXIST | 404 | The specified external location doesn't exist.<br/>The client should verify the name.
 PERMISSION_DENIED | 403 | User is not the owner or a metastore admin.<br/>The client should contact their Unity Catalog admin.
-DEPENDENCY_VIOLATION | 400 | Dependent external tables or mounts exist. Pass `force=true` to override.<br/>The client should drop dependent tables first or retry with `force=true`.
+INVALID_ARGUMENT | 400 | The external location is still referenced by tables, volumes, or registered models. Pass `force=true` to delete anyway.<br/>The client should drop dependent objects first or retry with `force=true`.
 
 ## API Reference
 
