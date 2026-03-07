@@ -629,7 +629,7 @@ Possible errors on this API are listed below:
 
 Error Code | HTTP Status | Description
 -|-|-
-ALREADY_EXISTS | 409 | An external location with this name already exists.<br/>The client should provide a different name.
+EXTERNAL_LOCATION_ALREADY_EXISTS | 400 | An external location with this name already exists.<br/>The client should provide a different name.
 NOT_FOUND | 404 | The specified storage credential does not exist.<br/>The client should verify the credential name or create the credential first.
 PERMISSION_DENIED | 403 | User is not a metastore admin and does not have both CREATE EXTERNAL LOCATION on the metastore and OWNER or CREATE EXTERNAL LOCATION on the credential.<br/>The client should contact their Unity Catalog admin.
 INVALID_PARAMETER_VALUE | 400 | One or more fields are invalid, such as a malformed URL.
@@ -827,7 +827,7 @@ Possible errors on this API are listed below:
 Error Code | HTTP Status | Description
 -|-|-
 EXTERNAL_LOCATION_DOES_NOT_EXIST | 404 | The specified external location doesn't exist.<br/>The client should verify the name.
-ALREADY_EXISTS | 409 | The new name conflicts with an existing external location.<br/>The client should choose a different name.
+EXTERNAL_LOCATION_ALREADY_EXISTS | 400 | The new name conflicts with an existing external location.<br/>The client should choose a different name.
 PERMISSION_DENIED | 403 | User is not the owner or a metastore admin.<br/>The client should contact their Unity Catalog admin.
 INVALID_PARAMETER_VALUE | 400 | One or more fields are invalid.
 
